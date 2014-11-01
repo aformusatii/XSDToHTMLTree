@@ -17,9 +17,9 @@ Quick run to convert default `xsd/sample_shiporder.xsd` file:
 
 Ouput file `output/sample_shiporder.html`
 
-Run to convert custom xsd file:
+Run to convert custom xsd file (you can use absolute path to xsd as well):
 
-	mvn -q exec:java -DrootXSDFile=somefile.xsd
+	mvn -q exec:java -DrootXSDFile=xsd/somefile.xsd
 
 Ouput file `output/somefile.html` 
 
