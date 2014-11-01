@@ -11,7 +11,7 @@ Install:
 
 	mvn install
 
-Quick Run to convert default `xsd/sample_shiporder.xsd` file:
+Quick run to convert default `xsd/sample_shiporder.xsd` file:
 
 	mvn -q exec:java
 
@@ -23,6 +23,6 @@ Run to convert custom xsd file:
 
 Ouput file `output/somefile.html` 
 
-## HTML Customization
+## Output HTML Customization
 
 For html customization please see `template.html` in the template folder and corresponding static resources in the html folder. 

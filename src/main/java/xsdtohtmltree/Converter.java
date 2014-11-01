@@ -45,7 +45,6 @@ public class Converter {
         XSImplementation impl = (XSImplementation) registry.getDOMImplementation("XS-Loader");
         XSLoader schemaLoader = impl.createXSLoader(null);
         DOMConfiguration config = schemaLoader.getConfig();
-        // set validation feature
         config.setParameter("validate", Boolean.TRUE);
         XSModel model = schemaLoader.loadURI(getProp(ROOT_XSD_FILE));
 
@@ -92,13 +91,17 @@ public class Converter {
                 }
 
                 if (repeat < 3) {
-                    content.append("<li><span>" + item.getName() + " - " + getPath(parents, item.getName()) + "</span>\n<ul>\n");
+                    content.append(String.format("<li><span>%s - [%s]</span>\n<ul>\n", 
+                            item.getName(), 
+                            getPath(parents, item.getName())));
                     traversItem(fParticle, parentsList, content);
                     content.append("</ul>\n</li>\n");
                 }
 
             } else if (fType instanceof XSSimpleTypeDecl) {
-                content.append("<li>" + item.getName() + " - " + getPath(parents, item.getName()) + "</li>\n");
+                content.append(String.format("<li>%s - [%s]</li>\n", 
+                        item.getName(), 
+                        getPath(parents, item.getName())));
             }
 
         } else if (item instanceof XSParticleDecl) {
@@ -118,7 +121,7 @@ public class Converter {
                 traversItem((XSElementDecl) fValue, parents, content);
 
             } else if (fValue instanceof XSWildcardDecl) {
-                content.append("<li> XSWildcardDecl" + item.getName() + "</li>\n");
+                content.append(String.format("<li> XSWildcardDecl %s</li>\n", item.getName()));
             }
 
         }
@@ -138,15 +141,18 @@ public class Converter {
     }
 
     private static String getPath(List<Item> parents, String last) {
-        String path = "";
+        StringBuilder path = new StringBuilder();
         if (parents != null) {
             for (Item i : parents) {
-                path += "&#92;" + i.getElementName();
+                path.append("&#92;");
+                path.append(i.getElementName());
             }
-            path += "&#92;" + last;
+            
+            path.append("&#92;");
+            path.append(last);
         }
 
-        return path;
+        return path.toString();
     }
 
 }
