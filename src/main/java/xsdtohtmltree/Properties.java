@@ -15,6 +15,11 @@ public final class Properties {
 			key.setValue(ObjectUtils.defaultIfNull(System.getProperty(key.getName()), key.getValue()));
 			System.out.println("=> " + key.getName() + " = " + new File(key.getValue()).getAbsolutePath());
 		}
+		
+		File outputDirectory = new File(Keys.OUTPUT_DIRECTORY.getValue());
+		if (!outputDirectory.exists()) {
+		    outputDirectory.mkdirs();
+		}
 	}
 	
 	public static String getProp(Keys key) {
