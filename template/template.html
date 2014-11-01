@@ -1,0 +1,38 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+
+	<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+	<title>XSD to CDM</title>
+
+	<link rel="stylesheet" href="../html/css/jquery.treeview.css" />
+	<link rel="stylesheet" href="../html/css/screen.css" />
+
+	<script src="../html/script/jquery.min.js"></script>
+	<script src="../html/script/jquery.cookie.js"></script>
+	<script src="../html/script/jquery.treeview.js"></script>
+
+	<script type="text/javascript">
+		$(document).ready(function(){
+			$("#gray").treeview({
+				collapsed: true,
+				control: "#treecontrol"
+			});				
+		});	
+	</script>
+ 	
+	</head>
+	<body>
+	
+		<div id="treecontrol">
+			<a title="Collapse the entire tree below" href="#"><img src="../html/images/minus.gif" /> Collapse All</a>
+			<a title="Expand the entire tree below" href="#"><img src="../html/images/plus.gif" /> Expand All</a>
+			<a title="Toggle the tree below, opening closed branches, closing open branches" href="#">Toggle All</a>
+		</div>	
+
+		<ul id="gray" class="treeview-gray">
+			_LIST_
+		</ul>
+
+	</body>
+</html>
