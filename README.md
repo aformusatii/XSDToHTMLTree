@@ -1,5 +1,7 @@
 # Builds an HTML Tree from given XSD.
 
+![XSD to HTML tree](https://raw.githubusercontent.com/aformusatii/XSDToHTMLTree/master/html/images/converter.png)
+
 You will need:
 * Java 5+
 * Maven 2+
