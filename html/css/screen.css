@@ -22,3 +22,11 @@ h1 { font-size: large }
 #main { padding: 1em; }
 
 a img { border: none; }
+
+#gray li span:hover {
+	background-color: #EEEEEE;
+}
+
+span.path {
+	color: #CCCCCC;
+}

@@ -91,7 +91,7 @@ public class Converter {
                 }
 
                 if (repeat < 3) {
-                    content.append(String.format("<li><span>%s - [%s]</span>\n<ul>\n", 
+                    content.append(String.format("<li><span>%s <span class=\"path\">[%s]</span></span>\n<ul>\n", 
                             item.getName(), 
                             getPath(parents, item.getName())));
                     traversItem(fParticle, parentsList, content);
@@ -99,7 +99,7 @@ public class Converter {
                 }
 
             } else if (fType instanceof XSSimpleTypeDecl) {
-                content.append(String.format("<li>%s - [%s]</li>\n", 
+                content.append(String.format("<li><span>%s <span class=\"path\">[%s]</span></span></li>\n", 
                         item.getName(), 
                         getPath(parents, item.getName())));
             }
