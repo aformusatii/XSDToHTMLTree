@@ -2,19 +2,25 @@ package xsdtohtmltree;
 
 import static xsdtohtmltree.Properties.getProp;
 import static xsdtohtmltree.Properties.Keys.HTML_TEMPALTE_FILE;
-import static xsdtohtmltree.Properties.Keys.ROOT_XSD_FILE;
 import static xsdtohtmltree.Properties.Keys.OUTPUT_DIRECTORY;
+import static xsdtohtmltree.Properties.Keys.ROOT_XSD_FILE;
+import static xsdtohtmltree.XSNode.createChild;
+import static xsdtohtmltree.XSNode.createOther;
+import static xsdtohtmltree.XSNode.createParentEnd;
+import static xsdtohtmltree.XSNode.createParentStart;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.velocity.Template;
+import org.apache.velocity.VelocityContext;
+import org.apache.velocity.app.VelocityEngine;
 import org.apache.xerces.impl.dv.xs.XSSimpleTypeDecl;
 import org.apache.xerces.impl.xs.XSComplexTypeDecl;
 import org.apache.xerces.impl.xs.XSElementDecl;
@@ -40,72 +46,71 @@ public class Converter {
     }
 
     public void convert() throws Exception {
-        StringBuilder content = new StringBuilder();
+
         DOMImplementationRegistry registry = DOMImplementationRegistry.newInstance();
         XSImplementation impl = (XSImplementation) registry.getDOMImplementation("XS-Loader");
         XSLoader schemaLoader = impl.createXSLoader(null);
         DOMConfiguration config = schemaLoader.getConfig();
         config.setParameter("validate", Boolean.TRUE);
         XSModel model = schemaLoader.loadURI(getProp(ROOT_XSD_FILE));
-
+        List<XSNode> allNodes = new LinkedList<XSNode>();
+        
         if (model != null) {
             XSNamedMap map = model.getComponents(XSConstants.ELEMENT_DECLARATION);
             if (map.getLength() != 0) {
                 for (int i = 0; i < map.getLength(); i++) {
-                    XSObject item = map.item(i);
-                    traversItem(item, null, content);
+                    XSObject node = map.item(i);
+                    traversItem(node, null, allNodes);
                 }
             }
         }
 
+        String templateFile = getProp(HTML_TEMPALTE_FILE);
         String outputFile = getProp(OUTPUT_DIRECTORY) + File.separator + FilenameUtils.removeExtension(new File(getProp(ROOT_XSD_FILE)).getName()) + ".html";
         System.out.println("=> Output file: " + new File(outputFile).getAbsolutePath());
 
-        generateOutputFile(getProp(HTML_TEMPALTE_FILE), outputFile, content);
+        generateOutputFile(allNodes, templateFile, outputFile);
     }
 
-    private void traversItem(XSObject item, List<Item> parents, StringBuilder content) {
-        if (item instanceof XSElementDecl) {
-            XSElementDecl element = (XSElementDecl) item;
+    private void traversItem(XSObject node, List<XSNode> parents, List<XSNode> allNodes) {
+        if (node instanceof XSElementDecl) {
+            XSElementDecl element = (XSElementDecl) node;
             XSTypeDefinition fType = element.getTypeDefinition();
             if (fType instanceof XSComplexTypeDecl) {
                 XSComplexTypeDecl fTypeDecl = (XSComplexTypeDecl) fType;
 
-                List<Item> parentsList = new ArrayList<Item>();
+                List<XSNode> parentsClone = new ArrayList<XSNode>();
 
                 if (parents != null) {
-                    parentsList.addAll(parents);
+                    parentsClone.addAll(parents);
                 }
 
-                Item newItem = new Item();
-                newItem.setElement(element);
-                parentsList.add(newItem);
+                XSNode newNode = createParentStart(element, fTypeDecl, null);
+                parentsClone.add(newNode);
 
                 XSParticle fParticle = fTypeDecl.getParticle();
 
                 int repeat = 0;
-                for (Item i : parentsList) {
-                    if (newItem.equals(i)) {
+                for (XSNode i : parentsClone) {
+                    if (newNode.equals(i)) {
                         repeat++;
                     }
                 }
 
                 if (repeat < 3) {
-                    content.append(String.format("<li><span>%s <span class=\"path\">[%s]</span></span>\n<ul>\n", 
-                            item.getName(), 
-                            getPath(parents, item.getName())));
-                    traversItem(fParticle, parentsList, content);
-                    content.append("</ul>\n</li>\n");
+                    allNodes.add(createParentStart(element, fTypeDecl, parents));
+                    traversItem(fParticle, parentsClone, allNodes);
+                    allNodes.add(createParentEnd(element, fTypeDecl, parents));
+                    
                 }
 
             } else if (fType instanceof XSSimpleTypeDecl) {
-                content.append(String.format("<li><span>%s <span class=\"path\">[%s]</span></span></li>\n", 
-                        item.getName(), 
-                        getPath(parents, item.getName())));
+                allNodes.add(createChild(element, (XSSimpleTypeDecl) fType, parents));
+                
             }
 
-        } else if (item instanceof XSParticleDecl) {
-            XSParticleDecl fParticleDecl = (XSParticleDecl) item;
+        } else if (node instanceof XSParticleDecl) {
+            XSParticleDecl fParticleDecl = (XSParticleDecl) node;
             XSTerm fValue = fParticleDecl.fValue;
 
             if (fValue instanceof XSModelGroupImpl) {
@@ -113,46 +118,39 @@ public class Converter {
                 XSParticleDecl[] fParticles = modelGroup.fParticles;
                 if (fParticles != null) {
                     for (XSParticleDecl fp : fParticles) {
-                        traversItem(fp, parents, content);
+                        traversItem(fp, parents, allNodes);
                     }
                 }
 
             } else if (fValue instanceof XSElementDecl) {
-                traversItem((XSElementDecl) fValue, parents, content);
+                traversItem((XSElementDecl) fValue, parents, allNodes);
 
             } else if (fValue instanceof XSWildcardDecl) {
-                content.append(String.format("<li> XSWildcardDecl %s</li>\n", item.getName()));
+                allNodes.add(createOther(fParticleDecl, (XSWildcardDecl) fValue, parents));
+                
             }
-
         }
     }
-
-    private void generateOutputFile(String in, String out, StringBuilder content) throws IOException {
-        BufferedReader reader = new BufferedReader(new FileReader(in));
-        PrintWriter writer = new PrintWriter(new FileWriter(out));
-        String line = null;
-
-        while ((line = reader.readLine()) != null) {
-            writer.println(line.replaceAll("_LIST_", content.toString()));
-        }
-
-        reader.close();
-        writer.close();
-    }
-
-    private static String getPath(List<Item> parents, String last) {
-        StringBuilder path = new StringBuilder();
-        if (parents != null) {
-            for (Item i : parents) {
-                path.append("&#92;");
-                path.append(i.getElementName());
-            }
+    
+    private void generateOutputFile(List<XSNode> allNodes, String template, String output) {
+        PrintWriter outputWriter = null;
+        try {
+            outputWriter = new PrintWriter(new FileWriter(output));
+            VelocityEngine ve = new VelocityEngine();
+            ve.init();
+            Template t = ve.getTemplate( template );
+            VelocityContext context = new VelocityContext();
+            context.put("nodes", allNodes);
+            t.merge( context, outputWriter );
+            outputWriter.flush();
             
-            path.append("&#92;");
-            path.append(last);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (outputWriter != null) {
+                outputWriter.close(); 
+            }
         }
-
-        return path.toString();
     }
 
 }

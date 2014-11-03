@@ -3,7 +3,7 @@
 <head>
 
 	<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
-	<title>XSD to CDM</title>
+	<title>XSD to HTML Tree</title>
 
 	<link rel="stylesheet" href="../html/css/jquery.treeview.css" />
 	<link rel="stylesheet" href="../html/css/screen.css" />
@@ -27,12 +27,41 @@
 		<div id="treecontrol">
 			<a title="Collapse the entire tree below" href="#"><img src="../html/images/minus.gif" /> Collapse All</a>
 			<a title="Expand the entire tree below" href="#"><img src="../html/images/plus.gif" /> Expand All</a>
-			<a title="Toggle the tree below, opening closed branches, closing open branches" href="#">Toggle All</a>
 		</div>
-		 -->	
+		 -->
+	
+		## Renders all parent nodes (path) 
+		#macro( parents $node)
+		  <span class="path">[#foreach( $parent in $node.parents )$parent.elementName&#47;#end$node.elementName]</span>
+		#end
 
 		<ul id="gray" class="treeview-gray">
-			_LIST_
+			#foreach( $node in $nodes )
+				## Renders Parent Node
+				#if ( $node.parentStart )
+					<li>
+						<span>$node.elementName #parents( $node )</span>
+						<ul>
+				#end
+
+				## Renders Child Node
+				#if ( $node.child )
+					<li>
+						<span>$node.elementName #parents( $node )</span>
+					</li>
+				#end
+
+				## Renders Other Node
+				#if ( $node.other )
+					<li> XSWildcardDecl $node.elementName</li>
+				#end		
+
+				## Renders End of Parent Node
+				#if ( $node.parentEnd )		
+						</ul>
+					</li>
+				#end
+			#end
 		</ul>
 
 	</body>
